@@ -64,11 +64,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - The workspace and fuzz harness now use `soroban-sdk` 21.7.7. SDK 21's
-  documented v20→v21 breaking change only affects implementations of
+  documented v20→v21 contract API change only affects implementations of
   `CustomAccountInterface::__check_auth` (`BytesN<32>` → `Hash<32>`); this
-  repository does not implement that interface, so no contract behavior
-  change is required. The existing Rust 1.79 toolchain remains compatible
-  with SDK 21.7.7's Rust 1.74 MSRV. (#230)
+  repository does not implement that interface, so no contract code change
+  is required for that API. The refreshed dependency graph includes crates
+  using Rust 2024-edition manifests, so the project toolchain and CI are
+  raised from Rust 1.79 to Rust 1.85. (#230)
 - `soroban-sas-sdk`: a blocking write that never settles now returns
   `SdkError::SettlementTimeout { hash, last_status, polls }` instead of a
   generic `SdkError::RpcError`, and a `sendTransaction` rejection returns
