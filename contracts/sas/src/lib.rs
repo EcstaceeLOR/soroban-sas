@@ -5,7 +5,7 @@
 extern crate alloc;
 
 use soroban_sas_common::{
-    Attestation, SASError, LEDGERS_IN_ONE_YEAR, MAX_ATTESTATION_DATA_BYTES, UID,
+    Attestation, DelegationNonceKey, SASError, LEDGERS_IN_ONE_YEAR, MAX_ATTESTATION_DATA_BYTES, UID,
 };
 use soroban_sdk::{
     contract, contractimpl, panic_with_error, symbol_short, token, Address, Env, IntoVal, Symbol,
@@ -215,7 +215,11 @@ impl SAS {
         if amount <= 0 {
             panic_with_error!(&env, SASError::InvalidValue);
         }
-        env.storage().instance().set(&FEE_CONFIG, &(token, amount));
+        let old = env.storage().instance().get(&FEE_CONFIG);
+        env.storage()
+            .instance()
+            .set(&FEE_CONFIG, &(token.clone(), amount));
+        events::publish_fee_config_updated(&env, old, Some((token, amount)), admin);
         extend_instance_ttl(&env);
     }
 
@@ -225,7 +229,9 @@ impl SAS {
         extend_instance_ttl(&env);
         let admin = require_admin(&env);
         admin.require_auth();
+        let old = env.storage().instance().get(&FEE_CONFIG);
         env.storage().instance().remove(&FEE_CONFIG);
+        events::publish_fee_config_updated(&env, old, None, admin);
         extend_instance_ttl(&env);
     }
 
@@ -1036,7 +1042,9 @@ impl SAS {
 
     fn consume_delegation_nonce(env: &Env, attester: &Address, nonce: u64) {
         extend_instance_ttl(env);
-        let key = (DELEGATION_NONCE, attester.clone());
+        let key = DelegationNonceKey {
+            attester: attester.clone(),
+        };
         if let Some(last) = env.storage().instance().get::<_, u64>(&key) {
             if nonce <= last {
                 panic_with_error!(env, SASError::DelegationReplay);
@@ -1164,7 +1172,7 @@ impl SAS {
     /// - `Some(n)`: `n` is the highest nonce consumed so far; the next valid nonce is any value strictly greater than `n` (i.e. > `n`).
     pub fn get_delegation_nonce(env: Env, attester: Address) -> Option<u64> {
         extend_instance_ttl(&env);
-        let key = (DELEGATION_NONCE, attester);
+        let key = DelegationNonceKey { attester };
         let nonce = env.storage().instance().get::<_, u64>(&key);
         extend_instance_ttl(&env);
         nonce

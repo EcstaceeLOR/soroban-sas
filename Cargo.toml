@@ -7,6 +7,7 @@ members = [
     "packages/soroban-sas-sdk",
     "packages/soroban-sas-cli",
 ]
+exclude = ["fuzz"]
 resolver = "2"
 
 [package]
@@ -59,4 +60,3 @@ soroban-sas-common = { path = "packages/soroban-sas-common" }
 
 [workspace.lints.clippy]
 new_without_default = "allow"
-
