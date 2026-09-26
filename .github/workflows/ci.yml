@@ -10,60 +10,6 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  sdk21-patch:
-    name: Apply SDK 21 compatibility patch
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'chore/230-soroban-sdk-21'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v4.1.0
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: 1.85.0
-          targets: wasm32-unknown-unknown
-          components: clippy, rustfmt
-      - name: Apply source and lockfile compatibility fixes
-        shell: bash
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          path = Path('packages/soroban-sas-common/src/merkle.rs')
-          text = path.read_text()
-          text = text.replace('env.crypto().sha256(&buf)\n}', 'env.crypto().sha256(&buf).into()\n}')
-          path.write_text(text)
-
-          path = Path('packages/soroban-sas-common/src/lib.rs')
-          text = path.read_text()
-          text = text.replace('UID(env.crypto().sha256(&payload))', 'UID(env.crypto().sha256(&payload).into())')
-          path.write_text(text)
-
-          path = Path('packages/soroban-sas-common/src/typed_data.rs')
-          text = path.read_text()
-          text = text.replace('env.crypto().sha256(&buf)\n}', 'env.crypto().sha256(&buf).into()\n}')
-          text = text.replace(
-              '.sha256(&Bytes::from_slice(env, passphrase.as_bytes()))\n    }',
-              '.sha256(&Bytes::from_slice(env, passphrase.as_bytes()))\n            .into()\n    }',
-          )
-          path.write_text(text)
-          PY
-          cargo update -p ed25519-dalek@3.0.0 --precise 2.2.0
-          cargo fmt --all
-      - name: Commit compatibility fixes
-        shell: bash
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add Cargo.lock packages/soroban-sas-common/src/merkle.rs packages/soroban-sas-common/src/lib.rs packages/soroban-sas-common/src/typed_data.rs
-          if ! git diff --cached --quiet; then
-            git commit -m "fix: adapt hashing for soroban sdk 21"
-            git push origin HEAD:${{ github.event.pull_request.head.ref }}
-          fi
-
   fmt:
     name: Formatting
     runs-on: ubuntu-latest
