@@ -67,11 +67,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `LEDGERS_IN_ONE_YEAR` common constant for persistent storage TTL bumps.
 
 ### Changed
-- The workspace and fuzz harness now use `soroban-sdk` 21.7.7. The migration
-  adapts SDK 21's `sha256` `Hash<32>` return values to the existing `BytesN<32>`
-  UID/domain types and updates Stellar asset test registration to the v2 test
-  helper. Dependency locks keep the SDK 21 graph compatible with the project's
-  existing Rust 1.79 toolchain by resolving `ed25519-dalek` 2.1.1. (#230)
+- The workspace and fuzz harness now use `soroban-sdk` 21.7.7. SDK 21's
+  migration adapts SDK 21's `sha256` `Hash<32>` return values to the existing
+  `BytesN<32>` UID/domain types and updates Stellar asset test registration to
+  the v2 test helper. The refreshed dependency graph includes crates using
+  Rust 2024-edition manifests, so the project toolchain and CI are raised from
+  Rust 1.79 to Rust 1.85. (#230)
 - `soroban-sas-sdk`: a blocking write that never settles now returns
   `SdkError::SettlementTimeout { hash, last_status, polls }` instead of a
   generic `SdkError::RpcError`, and a `sendTransaction` rejection returns
