@@ -34,5 +34,7 @@ pub use simulate::{
     sign_transaction, unsigned_envelope_xdr, validate_simulated_transaction,
 };
 pub use stream::{AttestationEvent, EventFilter, EventStream, EventSubscription, StreamEnvelope};
+pub mod mock;
+pub use mock::{IndexerClientTrait, MockCall, MockSASClient, SASClientTrait};
 #[cfg(test)]
 mod test;
